@@ -2,7 +2,7 @@ name: Mirror Bluesky to Telegram
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # every 15 minutes (GitHub may add a few minutes of delay)
+    - cron: "7,22,37,52 * * * *"   # every 15 min, on odd minutes — GitHub's scheduler is less congested off the quarter-hours
   workflow_dispatch: {}       # lets you trigger a run manually from the Actions tab
 
 permissions:
