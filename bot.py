@@ -29,10 +29,13 @@ SECONDS_BETWEEN_POSTS = 3  # Telegram allows ~20 messages/min to one chat
 
 
 def env(name, default=None):
+    # In GitHub Actions a missing/misnamed secret arrives as an empty string,
+    # so treat empty the same as absent.
     value = os.environ.get(name, default)
-    if value is None:
-        sys.exit(f"Missing required environment variable: {name}")
-    return value
+    if not (value and value.strip()):
+        sys.exit(f"Missing required environment variable / repository secret: {name}. "
+                 "Check Settings > Secrets and variables > Actions.")
+    return value.strip()
 
 
 def env_bool(name, default):
@@ -57,6 +60,11 @@ def bsky_login(handle, app_password):
         json={"identifier": handle, "password": app_password},
         timeout=30,
     )
+    if resp.status_code in (400, 401):
+        sys.exit(f"Bluesky login failed ({resp.status_code}): {resp.text}\n"
+                 "Check the BSKY_HANDLE and BSKY_APP_PASSWORD secrets. The handle "
+                 "should look like 'you.bsky.social' (no @), and the password must "
+                 "be an app password from Settings > Privacy and Security > App Passwords.")
     resp.raise_for_status()
     return resp.json()["accessJwt"]
 
@@ -121,6 +129,11 @@ class Telegram:
             retry = resp.json().get("parameters", {}).get("retry_after", 30)
             time.sleep(retry + 1)
             resp = requests.post(f"{self.base}/{method}", json=payload, timeout=60)
+        if resp.status_code in (400, 401, 403, 404) and method == "sendMessage":
+            sys.exit(f"Telegram {method} failed ({resp.status_code}): {resp.text}\n"
+                     "Common causes: TELEGRAM_CHAT_ID is wrong (public channels use "
+                     "'@channelname'; private ones a '-100...' id), the bot was not "
+                     "added as a channel admin, or TELEGRAM_BOT_TOKEN is wrong.")
         resp.raise_for_status()
         return resp.json()
 
