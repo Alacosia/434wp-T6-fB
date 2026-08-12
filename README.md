@@ -45,12 +45,29 @@ name, the post text, attached images, and a link back to the original on Bluesky
    | `BSKY_APP_PASSWORD` | the app password from step 2 |
    | `TELEGRAM_BOT_TOKEN` | the token from BotFather |
    | `TELEGRAM_CHAT_ID` | `@yourchannel` or the `-100...` id |
+   | `TELEGRAM_USER_ID` | your numeric Telegram id (see "Like / Repost buttons" below) |
 
 3. Go to the **Actions** tab, enable workflows if prompted, open
    **Mirror Bluesky to Telegram**, and click **Run workflow** to test it.
 
 The **first run posts nothing** — it just records the current timeline so your
 channel isn't flooded with old posts. Everything new after that gets mirrored.
+
+## Like / Repost buttons
+
+Every mirrored post carries ❤️ Like and 🔁 Repost buttons that act **from your
+Bluesky account** — no need to open Bluesky. (Multi-image posts get the buttons
+on a small companion message, since Telegram albums can't carry buttons.)
+
+Because the bot only runs every 15 minutes, a tap is not applied instantly:
+the button's loading spinner will time out (this is normal), and on the next
+run the like/repost happens and the button changes to "❤️ Liked ✓". To undo a
+like/repost you'll need to do it on Bluesky itself.
+
+**Strongly recommended:** add a `TELEGRAM_USER_ID` secret with your numeric
+Telegram id (message **@userinfobot** and it replies with it). Only that
+user's button presses are honored; without it, *anyone* who can see the
+channel can like/repost from your account.
 
 ## Options
 
