@@ -192,34 +192,39 @@ class Telegram:
 
     def send_post(self, message, image_urls, markup):
         """Send one mirrored post. Returns the message carrying the buttons."""
-        if not image_urls or len(message) > 1024:
-            # No media, or the caption would be truncated: plain message
-            # (the link preview carries the media in the long-caption case).
+        if not image_urls:
             return self.send_text(message, markup)
+        # Captions max out at 1024 chars; longer text moves to the companion
+        # message (a regular message, 4096 limit) so images are never dropped.
+        caption = message if len(message) <= 1024 else None
         try:
             if len(image_urls) == 1:
-                return self._call("sendPhoto", {
+                payload = {"chat_id": self.chat_id, "photo": image_urls[0]}
+                if caption:
+                    payload.update({"caption": caption, "parse_mode": "HTML",
+                                    "reply_markup": markup})
+                    return self._call("sendPhoto", payload)
+                anchor = self._call("sendPhoto", payload)
+            else:
+                # Telegram albums cannot carry inline keyboards, so the
+                # buttons always ride on a companion reply message.
+                media = [{"type": "photo", "media": url} for url in image_urls[:10]]
+                if caption:
+                    media[0]["caption"] = caption
+                    media[0]["parse_mode"] = "HTML"
+                anchor = self._call("sendMediaGroup", {
                     "chat_id": self.chat_id,
-                    "photo": image_urls[0],
-                    "caption": message,
-                    "parse_mode": "HTML",
-                    "reply_markup": markup,
-                })
-            # Telegram albums cannot carry inline keyboards, so the buttons
-            # ride on a small companion reply message.
-            media = [{"type": "photo", "media": url} for url in image_urls[:10]]
-            media[0]["caption"] = message
-            media[0]["parse_mode"] = "HTML"
-            album = self._call("sendMediaGroup", {
+                    "media": media,
+                })[0]
+            payload = {
                 "chat_id": self.chat_id,
-                "media": media,
-            })
-            return self._call("sendMessage", {
-                "chat_id": self.chat_id,
-                "text": "⬆️",
-                "reply_to_message_id": album[0]["message_id"],
+                "text": "⬆️" if caption else message[:4096],
+                "reply_to_message_id": anchor["message_id"],
                 "reply_markup": markup,
-            })
+            }
+            if not caption:
+                payload["parse_mode"] = "HTML"
+            return self._call("sendMessage", payload)
         except requests.HTTPError:
             # Telegram sometimes refuses to fetch a remote image; the post
             # still goes out as text with a link back to the original.
