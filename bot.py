@@ -35,7 +35,7 @@ import requests
 
 BSKY_API = "https://bsky.social/xrpc"
 STATE_FILE = Path(__file__).parent / "state.json"
-TIMELINE_LIMIT = 50
+TIMELINE_LIMIT = 100  # Bluesky's maximum per request
 SECONDS_BETWEEN_POSTS = 3  # Telegram allows ~20 messages/min to one chat
 MAX_TRACKED_POSTS = 300    # how many mirrored posts keep working buttons
 
@@ -302,7 +302,7 @@ def process_button_presses(state, telegram, bsky, allowed_user):
 def main():
     include_reposts = env_bool("INCLUDE_REPOSTS", "true")
     include_replies = env_bool("INCLUDE_REPLIES", "false")
-    max_posts = int(os.environ.get("MAX_POSTS_PER_RUN", "20"))
+    max_posts = int(os.environ.get("MAX_POSTS_PER_RUN", "100"))
     allowed_user = os.environ.get("TELEGRAM_USER_ID", "").strip()
 
     bsky = Bluesky(env("BSKY_HANDLE"), env("BSKY_APP_PASSWORD"))

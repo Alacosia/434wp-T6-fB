@@ -75,7 +75,7 @@ Set these as extra repository secrets (or edit the defaults in `bot.py`):
 
 - `INCLUDE_REPOSTS` — `true` (default) / `false`
 - `INCLUDE_REPLIES` — `false` (default) / `true`
-- `MAX_POSTS_PER_RUN` — default `20`; anything beyond this waits for the next run
+- `MAX_POSTS_PER_RUN` — default `100`; anything beyond this waits for the next run
 
 ## Notes and limits
 
